@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  mkd-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mkd-backend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://mkd_admin:mkd_secure_pass_2026@postgres:5432/mkd_messenger
+      - REDIS_URL=redis://redis:6379
+      - JWT_ACCESS_SECRET=mkd_prod_access_secret_super_secure_key_2026
+      - JWT_REFRESH_SECRET=mkd_prod_refresh_secret_super_secure_key_2026
+      - CORS_ORIGIN=*
+      - UPLOAD_DIR=uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - uploads_data:/app/uploads
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: mkd-postgres
+    restart: always
+    environment:
+      - POSTGRES_USER=mkd_admin
+      - POSTGRES_PASSWORD=mkd_secure_pass_2026
+      - POSTGRES_DB=mkd_messenger
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./src/database/schema.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mkd_admin -d mkd_messenger"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: mkd-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+
+  coturn:
+    image: coturn/coturn:latest
+    container_name: mkd-coturn
+    restart: always
+    ports:
+      - "3478:3478"
+      - "3478:3478/udp"
+      - "5349:5349"
+      - "5349:5349/udp"
+    command:
+      - -n
+      - --log-file=stdout
+      - --min-port=49152
+      - --max-port=65535
+      - --realm=mkd.messenger
+      - --user=mkd_turn:turn_secure_pass_2026
+
+volumes:
+  uploads_data:
+  pgdata:
+  redisdata:
