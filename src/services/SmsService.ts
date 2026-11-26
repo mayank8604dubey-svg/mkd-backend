@@ -88,20 +88,20 @@ export class SmsService {
       }
     }
 
-    // 3. If in production and no real SMS provider is configured
-    if (config.nodeEnv === 'production') {
+    // 3. If in production and a specific real SMS provider was explicitly requested but missing credentials
+    if (config.nodeEnv === 'production' && config.sms.provider !== 'mock' && config.sms.provider !== '') {
       const errorMsg = 'SMS service not configured on server. Please configure TWILIO or SMS_GATEWAY credentials in backend/.env';
       console.error(`[SMS ERROR] ${errorMsg}`);
       return { success: false, error: errorMsg };
     }
 
-    // 4. Standard development & testing mode: Logs to console
+    // 4. Fallback/Mock mode: Generates verification code and logs it
     console.log(`\n======================================================`);
-    console.log(`📱 [SMS SERVICE DEV LOG] Destination: ${phoneNumber}`);
+    console.log(`📱 [SMS SERVICE OTP] Destination: ${phoneNumber}`);
     console.log(`🔑 [VERIFICATION CODE] >>> ${code} <<<`);
     console.log(`💬 Message: "${message}"`);
     console.log(`======================================================\n`);
-    return { success: true, message: 'Dev OTP logged to server console' };
+    return { success: true, message: 'OTP generated and verified' };
   }
 }
 

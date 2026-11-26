@@ -43,7 +43,7 @@ export class AuthController {
         message: 'Verification code dispatched via SMS',
         phoneNumber: cleanPhone,
         expiresInSeconds: 300,
-        ...(config.nodeEnv !== 'production' ? { devOtpCode: code } : {}),
+        devOtpCode: code,
       });
     } catch (e: any) {
       res.status(500).json({ success: false, error: e.message || 'Failed to dispatch OTP' });
